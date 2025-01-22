@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'saldo_screen.dart';
-import 'pulsa/pulsa_screen.dart';
-import 'riwayat_screen.dart';
-import 'pembukuan_screen.dart'; // Import PembukuanScreen
+import '../services/home_screen_service.dart';
+import '../screens/saldo_screen.dart';
+import '../screens/pulsa_screen.dart';
+import '../screens/data_screen.dart';
+import '../screens/riwayat_screen.dart';
+import '../screens/pembukuan_screen.dart';
+import '../screens/bantuan_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -10,63 +13,18 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  double saldo = 10000.0;
-  double penghasilan = 0.0; // Total income from pulsa sales
-  double totalPengeluaran = 0.0; // Total expenses
-  List<String> riwayatTransaksi = [];
-
-  void tambahSaldo(double jumlah) {
-    setState(() {
-      saldo += jumlah;
-      riwayatTransaksi.add('Isi saldo Rp$jumlah'); // Add recharge transaction
-    });
-  }
-
-  void beliPulsa(double nominal, String provider, String nomorHP) {
-    if (saldo >= nominal) {
-      setState(() {
-        saldo -= nominal; // Kurangi saldo dengan nominal pulsa
-        penghasilan += 2000; // Tambahkan pemasukan default
-        totalPengeluaran += nominal; // Tambahkan nominal pulsa ke total pengeluaran
-        riwayatTransaksi.add('Pembelian pulsa Rp$nominal untuk $nomorHP di $provider');
-      });
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Pembelian Pulsa Berhasil'),
-          content: Text('Pulsa Rp$nominal telah berhasil dikirim ke nomor $nomorHP.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('OK'),
-            ),
-          ],
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Saldo tidak mencukupi')),
-      );
-    }
-  }
-
+  final HomeService _homeService = HomeService();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Jual Pulsa'),
-        centerTitle: true,
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              'Jual Pulsa',
+              'Aplikasi Penjualan Pulsa & Data',
               style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20),
@@ -75,12 +33,14 @@ class _HomeScreenState extends State<HomeScreen> {
               child: ListTile(
                 leading: Icon(Icons.account_balance_wallet, color: Colors.blue),
                 title: Text('Saldo'),
-                subtitle: Text('Rp${saldo.toStringAsFixed(0)}'),
+                subtitle: Text('Rp${_homeService.saldo.toStringAsFixed(0)}'),
                 trailing: TextButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => SaldoScreen(tambahSaldo)),
+                      MaterialPageRoute(builder: (_) => SaldoScreen((jumlah) {
+                        _homeService.tambahSaldo(jumlah, setState);
+                      })),
                     );
                   },
                   child: Text('Isi Saldo'),
@@ -93,12 +53,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 _menuButton(Icons.phone, 'Pulsa', () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => PulsaScreen(beliPulsa)),
+                    MaterialPageRoute(builder: (_) => PulsaScreen((nominal, provider, nomorHP) {
+                      _homeService.beliPulsa(nominal, provider, nomorHP, context, setState);
+                    })),
                   );
                 }),
                 _menuButton(Icons.data_usage, 'Data', () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Menu Data belum tersedia')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => DataScreen((nominal, provider, nomorHP) {
+                      _homeService.beliData(nominal, provider, nomorHP, context, setState);
+                    })),
                   );
                 }),
               ],
@@ -108,30 +73,23 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _menuButton(Icons.help, 'Bantuan', () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Menu Bantuan belum tersedia')),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => BantuanScreen()));
                 }),
                 _menuButton(Icons.history, 'Riwayat', () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => RiwayatScreen(riwayatTransaksi)),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => RiwayatScreen(_homeService.riwayatTransaksi)));
                 }),
                 _menuButton(Icons.receipt, 'Pembukuan', () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => PembukuanScreen(
-                        pemasukan: penghasilan, // Kirim total pemasukan
-                        pengeluaran: totalPengeluaran, // Kirim total pengeluaran
-                        riwayatIsiSaldo: riwayatTransaksi, // Kirim riwayat transaksi
+                        pemasukan: _homeService.penghasilan,
+                        pengeluaran: _homeService.totalPengeluaran,
+                        riwayatIsiSaldo: _homeService.riwayatTransaksi,
                       ),
                     ),
                   );
                 }),
-
-
               ],
             ),
           ],

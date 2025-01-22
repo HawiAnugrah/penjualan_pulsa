@@ -2,9 +2,45 @@ import 'package:flutter/material.dart';
 
 class SaldoScreen extends StatelessWidget {
   final Function(double) tambahSaldo;
+
   SaldoScreen(this.tambahSaldo);
 
   final TextEditingController _saldoController = TextEditingController();
+
+  void _showPurchaseConfirmation(BuildContext context, double nominal) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Isi Saldo Berhasil'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.check_circle, color: Colors.green, size: 60),
+            SizedBox(height: 20),
+            Text(
+              'Saldo berhasil ditambahkan!',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 10),
+            ListTile(
+              leading: Icon(Icons.account_balance_wallet, color: Colors.blue),
+              title: Text('Nominal'),
+              subtitle: Text('Rp${nominal.toStringAsFixed(0)}'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Close dialog
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _isiSaldo(BuildContext context, double nominal) {
     if (nominal >= 10000) {
@@ -17,44 +53,16 @@ class SaldoScreen extends StatelessWidget {
             TextButton(
               onPressed: () {
                 tambahSaldo(nominal);
-                Navigator.pop(context);
-                Navigator.pop(context);
-                // Popup konfirmasi isi saldo berhasil
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: Text('Isi Saldo Berhasil'),
-                    content: Text('Saldo Rp$nominal telah berhasil ditambahkan.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text('OK'),
-                      ),
-                    ],
-                  ),
-                );
+                Navigator.pop(context); // Close payment method dialog
+                _showPurchaseConfirmation(context, nominal);
               },
               child: Text('E-Wallet'),
             ),
             TextButton(
               onPressed: () {
                 tambahSaldo(nominal);
-                Navigator.pop(context);
-                Navigator.pop(context);
-                // Popup konfirmasi isi saldo berhasil
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: Text('Isi Saldo Berhasil'),
-                    content: Text('Saldo Rp$nominal telah berhasil ditambahkan.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text('OK'),
-                      ),
-                    ],
-                  ),
-                );
+                Navigator.pop(context); // Close payment method dialog
+                _showPurchaseConfirmation(context, nominal);
               },
               child: Text('Bank Transfer'),
             ),
@@ -71,7 +79,10 @@ class SaldoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Isi Saldo')),
+      appBar: AppBar(
+        title: Text('Isi Saldo'),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -89,6 +100,10 @@ class SaldoScreen extends StatelessWidget {
                 double? jumlah = double.tryParse(_saldoController.text);
                 if (jumlah != null) {
                   _isiSaldo(context, jumlah);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Masukkan nominal yang valid')),
+                  );
                 }
               },
               child: Text('Isi Saldo'),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pages/home_screen.dart'; // Sesuaikan dengan lokasi file HomeScreen Anda
+import 'screens/home_screen.dart'; // Sesuaikan dengan lokasi file HomeScreen Anda
 
 void main() {
   runApp(MyApp());
